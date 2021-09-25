@@ -1,0 +1,65 @@
+Week 4 Assignment.
+
+
+
+(https://kubernetes.io/docs/concepts/storage/storage-classes/) 
+(Kubernetes storage basics: PV, PVC and StorageClass) 
+(https://blog.mayadata.io/kubernetes-storage-basics-pv-pvc-and-storageclass) 
+
+ 
+Q:  What is a Storageclass? 
+A: After going through couple of articles and blog posts on Kubernetes storage class,
+following is my understanding on Storage class 
+PVs 
+Any volume that is persists after the Pod is not active (crashed / Deleted / not in use ) can be termed as persistent Volume.
+SSDs/NVMe Disk / NAS  etc on cloud or onPrem physical devices can be a persistent volume. 
+PVs are abstraction for physical volume and together with PVC they provide PODs the required data that can be stored after a Pod is inactive. This is specially useful when multiple pods are orchestrated in pipeline and the data needs to be shared 
+
+PVCs 
+A K8 Pod  consume persistent volume(PV)  by issuing a claim – Persistent Volume Claim. , i.e. PVC object lets pod use storage from any of the specified persistent Volume.
+
+StorageClass
+Storage Class is K8 object which provide a way to create PV/PVC pair which will be used by a POD when a pod is created
+You don’t have to create PV separately before claming it. Storage class help to define information where POD can utilize volumes. 
+
+We first, define a Storageclass, where we carve out specification of type of storage we require for a POD. We define Name of  Storageclass,  provisioner, reclaimPolicy, volumeBindingMode. 
+Then a PVC yaml file is created with storageclass to claim a dedicated storage for application POD. 
+
+
+
+
+"hostname storage class" mean?
+In our class Lab we have specified – hostpath in our PVC yaml file which, basically, mounts a directory from a host file system on which Node is present. 
+This is easiest way to have a persistent volume, although it have some security concerns. 
+Hostname Storageclass will define a file or directory from the underlying host node’s filesystem. 
+---------------x---------------
+Q: 	Explain the differences between this week's kubernetes "deployment" 
+(as described in the YAML file) from last week's. Be specific.
+A: 	One of the major change from week 3 K8 deployment is the usage of Persistent Storage  Volume. 
+	In last weeks yaml  file we used an empty directory 
+i.e. 
+volumes: 
+- name: jenkins-home 
+   emptyDir: { }
+
+In this weeks Deployment yaml file, we have used  PV/PVC + StorageClass  concept to retain the data from Jenkins.
+Specifically -  we have used a PVC object which is defined in “Jenkins-pvc.yaml” and in that file we have used a “Hostpath”  storage class which tell PODs to use host Node’s  storage ( in our case its Docker Desktop )  
+i.e 
+volumes:
+    - name: jenkins-data
+      persistentVolumeClaim:
+            claimName: jenkins-pv-claim
+------ 
+Also we have used Monitoring in the Service yaml 
+Prometheus – allows for Scraping on a particular port define to collect all the metrics 
+
+Service.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-service
+  annotations:
+      prometheus.io/scrape: 'true'
+      prometheus.io/path:   /
+      prometheus.io/port:   '8080'
+ 
