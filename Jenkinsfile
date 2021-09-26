@@ -1,11 +1,29 @@
-pipeline {
-    agent any
-    stages {
-        stage('build') {
-            steps {
-                sh 'uname -a'
-                sh 'echo main branch'
-            }
-        }
-    }
+podTemplate(
+containers: [
+  containerTemplate(
+  	    	name: 'maven', 
+      		image: 'maven:3.8.1-jdk-8', 
+      		command: 'sleep', 
+      		args: '30d')],
+   volumes: [
+   	persistentVolumeClaim(
+		mountPath: '/root/.m2/repository',
+		claimName: 'jenkins-pv-claim',
+	)]
+) 
+{
+node(POD_LABEL) {
+stage('Get a Maven project') {
+git 'https://github.com/imharsh2005/simple-java-maven-app-1.git'
+container('maven') {
+       	stage('Build a Maven project') {
+       	sh '''
+    	echo "maven build"
+	mvn -B -DskipTests clean package
+	'''
+	}
+      }
+    }  
+  }
 }
+
